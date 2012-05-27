@@ -1,0 +1,31 @@
+mediator = require 'mediator'
+utils = require './utils'
+
+# Application-specific view helpers
+# ---------------------------------
+
+# http://handlebarsjs.com/#helpers
+
+# Conditional evaluation
+# ----------------------
+
+# Map helpers
+# -----------
+
+# Make 'with' behave a little more mustachey
+Handlebars.registerHelper 'with', (context, options) ->
+  if not context or Handlebars.Utils.isEmpty context
+    options.inverse(this)
+  else
+    options.fn(context)
+
+# Inverse for 'with'
+Handlebars.registerHelper 'without', (context, options) ->
+  inverse = options.inverse
+  options.inverse = options.fn
+  options.fn = inverse
+  Handlebars.helpers.with.call(this, context, options)
+
+
+Handlebars.registerHelper 'urlize', (data) ->
+  new Handlebars.SafeString utils.urlize data

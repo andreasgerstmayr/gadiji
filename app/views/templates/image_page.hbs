@@ -1,0 +1,17 @@
+{{#if previousUrl}}
+  <a id="leftBtn" href="{{ previousUrl }}" class="button"></a>
+{{/if}}
+
+<div id="detailImage">
+  <a href="{{ file_raw }}"><img src="{{ file_medium }}" /></a>
+  
+  <div id="tags">
+    {{#each tags}}
+    <a href="list/{{ urlize this }}" class="tag">{{ this }}</a>
+    {{/each}}
+  </div>
+</div>
+
+{{#if nextUrl}}
+  <a id="rightBtn" href="{{ nextUrl }}" class="button"></a>
+{{/if}}
