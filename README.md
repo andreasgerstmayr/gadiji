@@ -23,6 +23,7 @@ example:
 ```
 
 ## Technology Stack
+* [CoffeeScript](http://coffeescript.org)
 * [Brunch](http://brunch.io)
 * [Chaplin](https://github.com/chaplinjs/chaplin)
 * [Backbone.js](http://documentcloud.github.com/backbone)
