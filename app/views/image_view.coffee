@@ -6,9 +6,9 @@ module.exports = class ImageView extends View
   tagName: 'a'
   autoRender: yes
   
-  initialize: (options, @tag) ->
+  initialize: (options, @urlized_tag) ->
     super
     
     idx = @model.get('idx')
-    detailLink = if @tag then "image/#{@tag}/#{idx}" else "image/#{idx}"
+    detailLink = if @urlized_tag then "image/#{@urlized_tag}/#{idx}" else "image/#{idx}"
     @$el.attr href: detailLink

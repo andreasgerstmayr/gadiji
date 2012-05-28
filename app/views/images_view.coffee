@@ -11,15 +11,15 @@ module.exports = class ImagesView extends CollectionView
   listSelector: '.images'
   animationDuration: 0
 
-  initialize: (options = {}, @tag = null) ->
-    if @tag
+  initialize: (options = {}, @urlized_tag = null) ->
+    if @urlized_tag
       options.filterer = (image) ->
-        @tag in image.get('urlized_tags') 
+        @urlized_tag in image.get('urlized_tags') 
       
     super
     
   getView: (item) ->
-    new ImageView {model: item}, @tag
+    new ImageView {model: item}, @urlized_tag
   
   insertView: (item, view) ->
     super

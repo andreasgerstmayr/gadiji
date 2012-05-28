@@ -13,3 +13,13 @@ module.exports = class NavigationView extends View
     super
     #console.debug 'NavigationView#initialize'
     @subscribeEvent 'startupController', @render
+    
+    @tag = null
+    @subscribeEvent 'updateNavigation', (params) ->
+      @tag = params.tag
+      @render()
+    
+  getTemplateData: ->
+    data = super
+    data.tag = @tag
+    data

@@ -2125,6 +2125,8 @@
       ImageController.__super__.constructor.apply(this, arguments);
     }
 
+    ImageController.prototype.historyURL = '';
+
     ImageController.prototype.random = function() {
       var _this = this;
       return mediator.allImages.synced(function() {
@@ -2139,6 +2141,9 @@
     ImageController.prototype.detail = function(params) {
       var idx,
         _this = this;
+      mediator.publish('updateNavigation', {
+        tag: null
+      });
       idx = parseInt(params.idx);
       return mediator.allImages.synced(function() {
         var model, nextUrl, previousUrl;
@@ -2152,33 +2157,36 @@
     };
 
     ImageController.prototype.detail_tag = function(params) {
-      var idx, tag,
+      var idx, urlized_tag,
         _this = this;
       idx = parseInt(params.idx);
-      tag = params.tag;
+      urlized_tag = params.tag;
       return mediator.allImages.synced(function() {
         var filteredImageIndex, filteredImages, image, index, model, nextImage, nextUrl, previousImage, previousUrl, _len;
         model = mediator.allImages.at(idx);
         filteredImages = _(mediator.allImages.toJSON()).filter(function(image) {
-          return __indexOf.call(image.urlized_tags, tag) >= 0;
+          return __indexOf.call(image.urlized_tags, urlized_tag) >= 0;
         });
         filteredImageIndex = 0;
         for (index = 0, _len = filteredImages.length; index < _len; index++) {
           image = filteredImages[index];
           if (image.idx === idx) {
             filteredImageIndex = index;
+            mediator.publish('updateNavigation', {
+              tag: image.tags[image.urlized_tags.indexOf(urlized_tag)]
+            });
             break;
           }
         }
         previousUrl = null;
         if (filteredImageIndex > 0) {
           previousImage = filteredImages[filteredImageIndex - 1];
-          previousUrl = "image/" + tag + "/" + previousImage.idx;
+          previousUrl = "image/" + urlized_tag + "/" + previousImage.idx;
         }
         nextUrl = null;
         if (filteredImageIndex + 1 < filteredImages.length) {
           nextImage = filteredImages[filteredImageIndex + 1];
-          nextUrl = "image/" + tag + "/" + nextImage.idx;
+          nextUrl = "image/" + urlized_tag + "/" + nextImage.idx;
         }
         return _this.view = new ImagePageView({
           model: model
@@ -2199,7 +2207,8 @@
     (function() {
   var Controller, ImagesController, ImagesView, mediator,
     __hasProp = Object.prototype.hasOwnProperty,
-    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; };
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; },
+    __indexOf = Array.prototype.indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   Controller = require('controllers/controller');
 
@@ -2216,15 +2225,30 @@
     }
 
     ImagesController.prototype.index = function() {
+      mediator.publish('updateNavigation', {
+        tag: null
+      });
       return this.view = new ImagesView({
         collection: mediator.allImages
       });
     };
 
     ImagesController.prototype.list_with_tag = function(params) {
+      var urlized_tag,
+        _this = this;
+      urlized_tag = params.tag;
+      mediator.allImages.synced(function() {
+        var image;
+        image = mediator.allImages.find(function(image) {
+          return __indexOf.call(image.get('urlized_tags'), urlized_tag) >= 0;
+        }).toJSON();
+        return mediator.publish('updateNavigation', {
+          tag: image.tags[image.urlized_tags.indexOf(urlized_tag)]
+        });
+      });
       return this.view = new ImagesView({
         collection: mediator.allImages
-      }, params.tag);
+      }, urlized_tag);
     };
 
     return ImagesController;
@@ -2447,7 +2471,6 @@
   utils = require('lib/utils');
 
   module.exports = Image = (function(_super) {
-    var idx;
 
     __extends(Image, _super);
 
@@ -2455,10 +2478,10 @@
       Image.__super__.constructor.apply(this, arguments);
     }
 
-    idx = 0;
+    Image.idx = 0;
 
     Image.prototype.parse = function(data) {
-      data.idx = idx++;
+      data.idx = Image.idx++;
       data.pub_date = new Date(data.pub_date);
       data.file_raw = "" + Settings.raw + "/" + data.file;
       data.file_medium = "" + Settings.medium + "/" + data.file;
@@ -2638,12 +2661,12 @@
 
     ImageView.prototype.autoRender = true;
 
-    ImageView.prototype.initialize = function(options, tag) {
+    ImageView.prototype.initialize = function(options, urlized_tag) {
       var detailLink, idx;
-      this.tag = tag;
+      this.urlized_tag = urlized_tag;
       ImageView.__super__.initialize.apply(this, arguments);
       idx = this.model.get('idx');
-      detailLink = this.tag ? "image/" + this.tag + "/" + idx : "image/" + idx;
+      detailLink = this.urlized_tag ? "image/" + this.urlized_tag + "/" + idx : "image/" + idx;
       return this.$el.attr({
         href: detailLink
       });
@@ -2693,13 +2716,13 @@
 
     ImagesView.prototype.animationDuration = 0;
 
-    ImagesView.prototype.initialize = function(options, tag) {
+    ImagesView.prototype.initialize = function(options, urlized_tag) {
       if (options == null) options = {};
-      this.tag = tag != null ? tag : null;
-      if (this.tag) {
+      this.urlized_tag = urlized_tag != null ? urlized_tag : null;
+      if (this.urlized_tag) {
         options.filterer = function(image) {
           var _ref;
-          return _ref = this.tag, __indexOf.call(image.get('urlized_tags'), _ref) >= 0;
+          return _ref = this.urlized_tag, __indexOf.call(image.get('urlized_tags'), _ref) >= 0;
         };
       }
       return ImagesView.__super__.initialize.apply(this, arguments);
@@ -2708,7 +2731,7 @@
     ImagesView.prototype.getView = function(item) {
       return new ImageView({
         model: item
-      }, this.tag);
+      }, this.urlized_tag);
     };
 
     ImagesView.prototype.insertView = function(item, view) {
@@ -2766,7 +2789,19 @@
 
     NavigationView.prototype.initialize = function() {
       NavigationView.__super__.initialize.apply(this, arguments);
-      return this.subscribeEvent('startupController', this.render);
+      this.subscribeEvent('startupController', this.render);
+      this.tag = null;
+      return this.subscribeEvent('updateNavigation', function(params) {
+        this.tag = params.tag;
+        return this.render();
+      });
+    };
+
+    NavigationView.prototype.getTemplateData = function() {
+      var data;
+      data = NavigationView.__super__.getTemplateData.apply(this, arguments);
+      data.tag = this.tag;
+      return data;
     };
 
     return NavigationView;
@@ -2895,10 +2930,30 @@ function program5(depth0,data) {
   "views/templates/navigation": function(exports, require, module) {
     module.exports = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
   helpers = helpers || Handlebars.helpers;
-  var foundHelper, self=this;
+  var buffer = "", stack1, stack2, foundHelper, tmp1, self=this, functionType="function", helperMissing=helpers.helperMissing, undef=void 0, escapeExpression=this.escapeExpression;
 
+function program1(depth0,data) {
+  
+  var buffer = "", stack1;
+  buffer += "\r\n&raquo; ";
+  foundHelper = helpers.tag;
+  stack1 = foundHelper || depth0.tag;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "tag", { hash: {} }); }
+  buffer += escapeExpression(stack1) + "\r\n";
+  return buffer;}
 
-  return "<h1><a href=\"list\">Gallery</a></h1>";});
+  buffer += "<h1><a href=\"list\">Gallery</a></h1>\r\n";
+  foundHelper = helpers.tag;
+  stack1 = foundHelper || depth0.tag;
+  stack2 = helpers['if'];
+  tmp1 = self.program(1, program1, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  stack1 = stack2.call(depth0, stack1, tmp1);
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  return buffer;});
   }
 }));
 (this.require.define({
