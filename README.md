@@ -5,7 +5,7 @@ Works on all webservers, no configuration needed (only static files).
 ## Features
 * list all images
 * filter images by tags
-* show detail page of image with tags
+* show detail page of images
 
 ## Installation
 * Upload the contents of the ```public/``` directory to your webserver
